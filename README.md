@@ -52,8 +52,8 @@ El proyecto fue desarrollado y probado bajo entornos Debian/Linux.
 
 1. **Clonar el repositorio:**
    ```bash
-   git clone https://github.com/tu-usuario/ia-coach-vocal.git
-   cd ia-coach-vocal
+   git clone https://github.com/anistopera/Passaggio.git
+   cd Passaggio
    ```
 
 2. **Crear y activar el entorno virtual:**
