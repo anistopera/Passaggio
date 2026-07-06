@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Passaggio - Coach Vocal con IA. Analiza tu técnica de canto (Breathy, Belt, Straight) y recibe feedback personalizado.">
+    <title>Passaggio · Coach Vocal IA</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* ─── Extra animations & polish ─── */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+        :root {
+            --bg-dark: #0f1923;
+            --bg-card: #1a2a3a;
+            --panel-blue: #112b44;
+            --primary-red: #a0153e;
+            --accent-mauve: #9b4f72;
+            --accent-gold: #c9a96e;
+            --text-light: #e8e8ef;
+            --text-muted: #8899aa;
+            --border: rgba(155, 79, 114, 0.3);
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text-light);
+            font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-image:
+                radial-gradient(ellipse at 20% 20%, rgba(160, 21, 62, 0.12) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(17, 70, 101, 0.18) 0%, transparent 50%);
+        }
+
+        /* ─── Header ─── */
+        header {
+            width: 100%;
+            text-align: center;
+            padding: 3.5rem 1rem 2rem;
+        }
+
+        .logo-icon {
+            font-size: 2.8rem;
+            display: block;
+            margin-bottom: 0.5rem;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        h1 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            margin: 0 0 0.4rem;
+            background: linear-gradient(135deg, var(--text-light) 0%, var(--accent-gold) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin: 0;
+        }
+
+        /* ─── Container ─── */
+        .container {
+            width: 100%;
+            max-width: 640px;
+            padding: 0 1.5rem 4rem;
+        }
+
+        /* ─── Error ─── */
+        .error-message {
+            background: linear-gradient(135deg, rgba(160, 21, 62, 0.9), rgba(120, 15, 50, 0.9));
+            border: 1px solid rgba(160, 21, 62, 0.6);
+            border-left: 4px solid var(--primary-red);
+            padding: 1rem 1.25rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        /* ─── Upload Card ─── */
+        .upload-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2.5rem 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+        }
+
+        .upload-card h2 {
+            margin: 0 0 0.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--accent-gold);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .upload-card p.desc {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin: 0 0 2rem;
+            line-height: 1.6;
+        }
+
+        /* ─── Drop Zone ─── */
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 2.5rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(17, 70, 101, 0.15);
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .drop-zone:hover,
+        .drop-zone.dragover {
+            border-color: var(--accent-mauve);
+            background: rgba(155, 79, 114, 0.1);
+            transform: scale(1.01);
+        }
+
+        .drop-zone .dz-icon {
+            font-size: 2.5rem;
+            display: block;
+            margin-bottom: 0.75rem;
+        }
+
+        .drop-zone .dz-text {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+        }
+
+        .drop-zone .dz-text strong {
+            color: var(--text-light);
+        }
+
+        .drop-zone .dz-formats {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            display: block;
+        }
+
+        #audio_file {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* File selected indicator */
+        .file-selected {
+            display: none;
+            align-items: center;
+            gap: 0.6rem;
+            background: rgba(155, 79, 114, 0.15);
+            border: 1px solid rgba(155, 79, 114, 0.4);
+            border-radius: 8px;
+            padding: 0.7rem 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+
+        .file-selected.visible { display: flex; }
+
+        /* ─── Submit Button ─── */
+        .submit-btn {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary-red), var(--accent-mauve));
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0.08);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .submit-btn:hover::after { opacity: 1; }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(160, 21, 62, 0.5);
+        }
+
+        .submit-btn:active { transform: translateY(0); }
+
+        /* Loading state */
+        .submit-btn.loading {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        /* ─── Results Card ─── */
+        .results-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2.5rem 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .results-card h2 {
+            margin: 0 0 1.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--accent-gold);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        /* Technique Badge */
+        .technique-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--primary-red), var(--accent-mauve));
+            padding: 0.5rem 1.2rem;
+            border-radius: 99px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 1.25rem;
+        }
+
+        /* Confidence bar */
+        .confidence-wrap {
+            margin-bottom: 1.5rem;
+        }
+
+        .confidence-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 0.4rem;
+        }
+
+        .confidence-label span:last-child {
+            color: var(--accent-gold);
+            font-weight: 600;
+        }
+
+        .confidence-bar {
+            height: 8px;
+            border-radius: 99px;
+            background: rgba(255,255,255,0.08);
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            border-radius: 99px;
+            background: linear-gradient(90deg, var(--primary-red), var(--accent-gold));
+            transition: width 1s ease-out;
+        }
+
+        hr.divider {
+            border: none;
+            height: 1px;
+            background: var(--border);
+            margin: 1.5rem 0;
+        }
+
+        /* Feedback section */
+        .feedback-section h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--accent-mauve);
+            margin: 0 0 0.5rem;
+        }
+
+        .feedback-section p {
+            color: var(--text-light);
+            line-height: 1.7;
+            margin: 0 0 1.25rem;
+            font-size: 0.95rem;
+        }
+
+        /* ─── Footer ─── */
+        footer {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            padding-bottom: 2rem;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <span class="logo-icon">🎤</span>
+        <h1>Passaggio</h1>
+        <p class="subtitle">Coach Vocal con Inteligencia Artificial</p>
+    </header>
+
+    <main class="container">
+
+        {% if error %}
+        <div class="error-message" role="alert">
+            <span>⚠️</span>
+            <span>{{ error }}</span>
+        </div>
+        {% endif %}
+
+        <section class="upload-card">
+            <h2>Analizar canto</h2>
+            <p class="desc">
+                Sube una grabación de tu voz (2-5 segundos mínimo) y la IA identificará
+                tu técnica vocal y te dará retroalimentación personalizada.
+            </p>
+
+            <form id="uploadForm" action="/analizar" method="POST" enctype="multipart/form-data">
+                <div class="drop-zone" id="dropZone">
+                    <input type="file" name="audio_file" id="audio_file" accept="audio/*" required>
+                    <span class="dz-icon">🎵</span>
+                    <p class="dz-text">
+                        <strong>Arrastra tu audio aquí</strong><br>
+                        o haz clic para seleccionar
+                    </p>
+                    <span class="dz-formats">WAV · MP3 · OGG · FLAC · M4A</span>
+                </div>
+
+                <div class="file-selected" id="fileSelected">
+                    <span>🎧</span>
+                    <span id="fileName">ningún archivo</span>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    ✨ Analizar mi voz
+                </button>
+            </form>
+        </section>
+
+        {% if resultado %}
+        <section class="results-card">
+            <h2>📊 Resultado del análisis</h2>
+
+            <span class="technique-badge">{{ resultado.tecnica }}</span>
+
+            <div class="confidence-wrap">
+                <div class="confidence-label">
+                    <span>Confianza del modelo</span>
+                    <span>{{ resultado.confianza }}</span>
+                </div>
+                <div class="confidence-bar">
+                    <div class="confidence-fill" id="confBar" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <hr class="divider">
+
+            <div class="feedback-section">
+                <h3>🩺 Diagnóstico</h3>
+                <p>{{ resultado.diagnostico }}</p>
+
+                <h3>💡 Consejo del Coach</h3>
+                <p>{{ resultado.consejo }}</p>
+            </div>
+        </section>
+        {% endif %}
+
+    </main>
+
+    <footer>
+        <p>Passaggio · Coach Vocal IA · 2025</p>
+    </footer>
+
+    <script>
+        // ─── File input label update ───
+        const fileInput = document.getElementById('audio_file');
+        const fileSelected = document.getElementById('fileSelected');
+        const fileName = document.getElementById('fileName');
+        const dropZone = document.getElementById('dropZone');
+        const submitBtn = document.getElementById('submitBtn');
+        const form = document.getElementById('uploadForm');
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                fileName.textContent = fileInput.files[0].name;
+                fileSelected.classList.add('visible');
+            }
+        });
+
+        // ─── Drag & drop visual feedback ───
+        ['dragenter', 'dragover'].forEach(evt => {
+            dropZone.addEventListener(evt, e => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(evt => {
+            dropZone.addEventListener(evt, e => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+            });
+        });
+
+        // ─── Loading state on submit ───
+        form.addEventListener('submit', () => {
+            submitBtn.classList.add('loading');
+            submitBtn.textContent = '⏳ Analizando...';
+        });
+
+        // ─── Animate confidence bar on load ───
+        {% if resultado %}
+        window.addEventListener('load', () => {
+            const raw = "{{ resultado.confianza }}".replace('%', '');
+            const val = parseFloat(raw) || 0;
+            setTimeout(() => {
+                document.getElementById('confBar').style.width = val + '%';
+            }, 300);
+        });
+        {% endif %}
+    </script>
+
+</body>
+</html>

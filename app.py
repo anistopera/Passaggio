@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torchaudio
 import torch.nn.functional as F
+import soundfile as sf
 from flask import Flask, request, render_template
 from werkzeug.utils import secure_filename
 
@@ -45,7 +46,18 @@ class AudioCNNCoach(nn.Module):
 
 
 def preparar_audio_nuevo(ruta_audio, duracion_segundos=2, sample_rate=16000):
-    waveform, sr = torchaudio.load(ruta_audio)
+    """Carga y preprocesa audio con fallback a soundfile para mayor compatibilidad."""
+    try:
+        waveform, sr = torchaudio.load(ruta_audio, backend="soundfile")
+        waveform = waveform.float()
+    except Exception:
+        data, sr = sf.read(ruta_audio, dtype="float32")
+        if data.ndim == 1:
+            data = data.reshape(1, -1)
+        else:
+            data = data.T
+        waveform = torch.from_numpy(data).float()
+
     if waveform.shape[0] > 1:
         waveform = torch.mean(waveform, dim=0, keepdim=True)
     if sr != sample_rate:
@@ -57,7 +69,7 @@ def preparar_audio_nuevo(ruta_audio, duracion_segundos=2, sample_rate=16000):
         waveform = waveform[:, :muestras_objetivo]
     elif waveform.shape[1] < muestras_objetivo:
         pad_amount = muestras_objetivo - waveform.shape[1]
-        waveform = torch.nn.functional.pad(waveform, (0, pad_amount))
+        waveform = F.pad(waveform, (0, pad_amount))
 
     transformador = torchaudio.transforms.Spectrogram(n_fft=400, hop_length=160)
     espectrograma = transformador(waveform)
@@ -90,6 +102,7 @@ clases_info = {
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads/'
+os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 @app.route('/', methods=['GET'])
 def index():
@@ -138,5 +151,4 @@ def analizar():
         return render_template('index.html', resultado=resultado)
 
 if __name__ == '__main__':
-    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
     app.run(debug=True, port=5000)

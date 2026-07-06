@@ -142,5 +142,6 @@ if __name__ == "__main__":
 
 
 
-    archivo_prueba = "/home/nicole05/Documentos/IA/Passaggio/datos/belt/f1_arpeggios_belt_c_a.wav"
+    # Reemplaza con la ruta a tu archivo de prueba
+    archivo_prueba = "datos/belt/f1_arpeggios_belt_c_a.wav"
     analizar_canto(archivo_prueba)
