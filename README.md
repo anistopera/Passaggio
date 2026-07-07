@@ -31,7 +31,7 @@ El pipeline del proyecto está compuesto por dos fases principales:
 ## Estructura del Proyecto
 
 ```text
-ia-coach-vocal/
+Passaggio/
  ├── datos/                  # Carpeta de audios de entrenamiento (Ignorada en Git)
  ├── modelos/                # Almacenamiento de pesos del modelo (.pth)
  ├── static/
@@ -42,36 +42,49 @@ ia-coach-vocal/
  ├── prepararDatos.ipynb     # Pipeline de extraccion y formateo de datos
  ├── entrenamiento.ipynb     # Bucle de entrenamiento y validacion del modelo
  ├── app.py                  # Servidor Backend y logica de inferencia
- ├── requirements.txt        # Dependencias del proyecto
  └── README.md               # Documentacion
 ```
 
 ## Requisitos de Instalación
 
-El proyecto fue desarrollado y probado bajo entornos Debian/Linux.
-
 1. **Clonar el repositorio:**
    ```bash
-   git clone https://github.com/tu-usuario/ia-coach-vocal.git
-   cd ia-coach-vocal
+   git clone https://github.com/anistopera/Passaggio.git
+   cd Passaggio
    ```
 
 2. **Crear y activar el entorno virtual:**
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
 
-3. **Instalar las dependencias del sistema operativo** (necesarias para el procesamiento de audio):
-   ```bash
-   sudo apt update
-   sudo apt install ffmpeg libsm6 libxext6 -y
-   ```
+   * **En Windows (PowerShell/CMD):**
+     ```cmd
+     python -m venv venv
+     venv\Scripts\activate
+     ```
+
+   * **En Linux/Debian:**
+     ```bash
+     python3 -m venv venv
+     source venv/bin/activate
+     ```
+
+3. **Instalar dependencias del sistema:**
+
+   * **En Windows:**  
+     No se requieren instalaciones adicionales en el sistema; los binarios necesarios vienen incluidos con Python y las librerías pip.
+   
+   * **En Linux/Debian** (necesarias para el procesamiento de audio):
+     ```bash
+     sudo apt update
+     sudo apt install ffmpeg libsm6 libxext6 -y
+     ```
 
 4. **Instalar las dependencias de Python:**
+   En este proyecto no hay un archivo de requerimientos, por lo que debes instalar las librerías base manualmente ejecutando:
+   
    ```bash
-   pip install -r requirements.txt
+   pip install Flask torch torchaudio soundfile werkzeug
    ```
+   *(Nota: La instalación estándar de PyTorch optimizada para CPU será suficiente para el uso de esta aplicación).*
 
 ## Uso de la Aplicación
 
